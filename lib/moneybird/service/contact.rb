@@ -6,6 +6,7 @@ module Moneybird::Service
     include Moneybird::Traits::FindAll
     include Moneybird::Traits::Save
     include Moneybird::Traits::Delete
+    include Moneybird::Traits::Synchronization
 
     def find_by_customer_id(customer_id)
       build client.get("#{path}/customer_id/#{customer_id}")

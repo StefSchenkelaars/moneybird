@@ -130,4 +130,23 @@ describe Moneybird::Service::Contact do
       end
     end
   end
+
+  describe "#synchronization" do
+    before do
+      stub_request(:get, "https://moneybird.com/api/v2/123/contacts/synchronization")
+        .to_return(status: 200, body: fixture_response(:synchronization))
+    end
+
+    it 'retuns an array' do
+      service.synchronization.must_be_instance_of Array
+    end
+
+    it 'returns synchorization resource objects' do
+      service.synchronization.first.must_be_instance_of Moneybird::Resource::Synchronization
+    end
+
+    it 'returns synchorization with correct data' do
+      service.synchronization.map(&:id).must_equal %w[207517650930107558 207517650975196329]
+    end
+  end
 end

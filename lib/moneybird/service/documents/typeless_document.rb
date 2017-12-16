@@ -6,6 +6,7 @@ module Moneybird::Service::Document
     include Moneybird::Traits::FindAll
     include Moneybird::Traits::Save
     include Moneybird::Traits::Delete
+    include Moneybird::Traits::Synchronization
 
     private
 
