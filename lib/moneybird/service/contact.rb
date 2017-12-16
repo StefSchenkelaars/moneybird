@@ -7,20 +7,18 @@ module Moneybird::Service
     include Moneybird::Traits::Save
     include Moneybird::Traits::Delete
 
+    def find_by_customer_id(customer_id)
+      build client.get("#{path}/customer_id/#{customer_id}")
+    end
+
+    private
+
     def resource_class
       Moneybird::Resource::Contact
     end
 
     def path
       "#{administration_id}/contacts"
-    end
-
-    def find_by_customer_id(customer_id)
-      result = client.get("#{path}/customer_id/#{customer_id}")
-
-      if result.status.to_i == GET_SUCCESS_CODE
-        build(JSON.parse(result.body))
-      end
     end
   end
 end

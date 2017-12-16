@@ -1,8 +1,7 @@
 require "spec_helper"
 
 describe Moneybird::Resource::Contact do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:contact) { Moneybird::Resource::Contact.build(hash_response(:contact)) }
 
   it "has events" do

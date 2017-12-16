@@ -1,13 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::TaxRate do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::TaxRate.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/tax_rates', FakeResponse.new(200, json_response(:tax_rates)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/tax_rates')
+        .to_return(status: 200, body: fixture_response(:tax_rates))
     end
 
     it "returns list of tax_rates" do

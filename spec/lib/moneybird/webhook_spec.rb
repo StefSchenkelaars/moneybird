@@ -1,7 +1,7 @@
 require "spec_helper"
 
 describe Moneybird::Webhook do
-  let(:webhook) { Moneybird::Webhook.from_json(json_webhook(:sales_invoice)) }
+  let(:webhook) { Moneybird::Webhook.from_json(fixture_response(:sales_invoice, :webhooks)) }
 
   it "builds an entity" do
     webhook.build_entity.must_be_instance_of Moneybird::Resource::SalesInvoice

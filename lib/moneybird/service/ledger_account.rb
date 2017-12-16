@@ -7,6 +7,8 @@ module Moneybird::Service
     include Moneybird::Traits::Save
     include Moneybird::Traits::Delete
 
+    private
+
     def resource_class
       Moneybird::Resource::LedgerAccount
     end

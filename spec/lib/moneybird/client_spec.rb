@@ -3,51 +3,68 @@ require "spec_helper"
 describe Moneybird::Client do
   let(:client) { Moneybird::Client.new("bearer token") }
 
-  before do
-    client.http = FakeHttp.new
-  end
-
   it "sets a username" do
     client.bearer_token.must_equal 'bearer token'
   end
 
-  describe "request handling" do
-    before do
-      client.http._next_response = FakeResponse.new(200,nil)
+  describe '#http' do
+    it 'returns a faraday connection object' do
+      client.http.must_be_instance_of Faraday::Connection
     end
-
-    it "can do a post request" do
-      client.post('/path', 'body')
-
-      client.http.requests.last.must_equal(["POST", "/api/v2/path", "body"])
+    it 'sets the token to the authorization header' do
+      client.http.headers['Authorization'].must_equal 'Bearer bearer token'
     end
-
-    it "can do a get request" do
-      client.get('/path')
-
-      client.http.requests.last.must_equal(["GET", "/api/v2/path", nil])
+    it 'sets the url to the specified domain' do
+      client.http.url_prefix.to_s.must_equal 'https://moneybird.com/'
     end
+  end
 
-    it "can do a patch request" do
-      client.patch('/path', 'body')
-
-      client.http.requests.last.must_equal(["PATCH", "/api/v2/path", "body"])
+  describe "#post" do
+    it "posts and parses json" do
+      stub_request(:post, 'https://moneybird.com/api/v2/path')
+        .to_return(status: 200, body: { foo: 'bar' }.to_json)
+      client.post('/path', 'body').must_equal('foo' => 'bar')
     end
+  end
 
-    it "can do a delete request" do
-      client.delete('/path')
-
-      client.http.requests.last.must_equal(["DELETE", "/api/v2/path", nil])
+  describe '#get' do
+    it "gets and parses json" do
+      stub_request(:get, 'https://moneybird.com/api/v2/path')
+        .to_return(status: 200, body: { foo: 'bar' }.to_json)
+      client.get('/path').must_equal('foo' => 'bar')
     end
+  end
 
-    describe "response" do
-      it "stores last response" do
-        client.http._next_response = 'somebody'
-        response = client.post('/path', 'body')
+  describe '#patch' do
+    it "patches and parses json" do
+      stub_request(:patch, 'https://moneybird.com/api/v2/path')
+        .to_return(status: 200, body: { foo: 'bar' }.to_json)
+      client.patch('/path', 'body').must_equal('foo' => 'bar')
+    end
+  end
 
-        response.must_equal 'somebody'
-        client._last_response.must_equal('somebody')
-      end
+  describe '#delete' do
+    it "deletes and parses json" do
+      stub_request(:delete, 'https://moneybird.com/api/v2/path')
+        .to_return(status: 200, body: { foo: 'bar' }.to_json)
+      client.delete('/path').must_equal('foo' => 'bar')
+    end
+  end
+
+  describe '#get_all_pages' do
+    it 'gets and parses all pages in json' do
+      stub_request(:get, 'https://moneybird.com/api/v2/path')
+        .to_return(
+          status: 200,
+          body: '[{"id":"1"}, {"id":"2"}]',
+          headers: {
+            'Link' => '<https://moneybird.com/api/v2/path?page=2>; rel="next"'
+          }
+        )
+      stub_request(:get, 'https://moneybird.com/api/v2/path?page=2')
+        .to_return(status: 200, body: '[{"id":"3"}, {"id":"4"}]')
+
+      client.get_all_pages('/path').must_equal([{ 'id' => '1' }, { 'id' => '2' }, { 'id' => '3' }, { 'id' => '4' }])
     end
   end
 end

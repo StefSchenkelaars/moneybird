@@ -6,6 +6,8 @@ module Moneybird::Service
     include Moneybird::Traits::Delete
     include Moneybird::Traits::Save
 
+    private
+
     def resource_class
       Moneybird::Resource::Webhook
     end

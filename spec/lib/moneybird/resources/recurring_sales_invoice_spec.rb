@@ -1,8 +1,7 @@
 require "spec_helper"
 
 describe Moneybird::Resource::RecurringSalesInvoice do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:recurring_sales_invoice) { Moneybird::Resource::RecurringSalesInvoice.build(hash_response(:recurring_sales_invoices).first.merge('notes' => [hash_response(:note)])) }
 
   it "has a contact" do

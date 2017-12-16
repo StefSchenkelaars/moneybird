@@ -9,12 +9,14 @@ module Moneybird::Service
       @client = client
     end
 
-    def resource_class
-      Moneybird::Resource::Administration
-    end
-
     def find(id)
       all.find{ |administration| administration.id.to_i == id }
+    end
+
+    private
+
+    def resource_class
+      Moneybird::Resource::Administration
     end
 
     def path

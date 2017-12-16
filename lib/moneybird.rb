@@ -10,26 +10,18 @@ require 'json'
 require 'net/http'
 
 module Moneybird
-  module Service; end;
-  module Traits; end;
+  module HttpError; end
+  module Middleware; end
+  module Service; end
+  module Traits; end
 end
 
-require "moneybird/traits/administration_service"
-require "moneybird/traits/find"
-require "moneybird/traits/find_all"
-require "moneybird/traits/service"
-require "moneybird/traits/save"
-require "moneybird/traits/delete"
-require "moneybird/client"
-require "moneybird/resource"
-require "moneybird/webhook"
+require 'moneybird/resource'
 
-Dir[File.join(File.dirname(__FILE__), 'moneybird/service', '**/*.rb')].each  do |service|
-  require service
+Dir[File.join(File.dirname(__FILE__), 'moneybird', 'traits', '*.rb')].each  do |file|
+  require file
 end
 
-Dir[File.join(File.dirname(__FILE__), 'moneybird/resource', '**/*.rb')].each  do |resource|
-  require resource
+Dir[File.join(File.dirname(__FILE__), 'moneybird', '**', '**.rb')].each  do |file|
+  require file
 end
-
-require "moneybird/version"

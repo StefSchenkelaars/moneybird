@@ -1,13 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::LedgerAccount do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::LedgerAccount.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/ledger_accounts', FakeResponse.new(200, json_response(:ledger_accounts)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/ledger_accounts')
+        .to_return(status: 200, body: fixture_response(:ledger_accounts))
     end
 
     it "returns list of ledger_accounts" do

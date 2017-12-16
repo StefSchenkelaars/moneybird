@@ -4,6 +4,8 @@ module Moneybird::Service
     include Moneybird::Traits::Service
     include Moneybird::Traits::FindAll
 
+    private
+
     def resource_class
       Moneybird::Resource::FinancialMutation
     end

@@ -1,8 +1,7 @@
 require "spec_helper"
 
 describe Moneybird::Resource::Webhook do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:webhook) { Moneybird::Resource::Webhook.build(hash_response(:webhook)) }
 
   it "has no nested json representation" do

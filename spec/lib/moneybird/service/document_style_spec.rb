@@ -1,13 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::DocumentStyle do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::DocumentStyle.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/document_styles', FakeResponse.new(200, json_response(:document_styles)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/document_styles')
+        .to_return(status: 200, body: fixture_response(:document_styles))
     end
 
     it "returns list of document_styles" do

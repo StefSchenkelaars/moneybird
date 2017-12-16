@@ -1,14 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::Contact do
-  let(:client) { faked_client }
-  let(:resource) { :contact }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::Contact.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/contacts', FakeResponse.new(200, json_response(:contacts)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/contacts')
+        .to_return(status: 200, body: fixture_response(:contacts))
     end
 
     it "returns list of contacts" do
@@ -29,21 +28,23 @@ describe Moneybird::Service::Contact do
 
   describe "#create" do
     before do
-      client.http.register_request(:POST, '/api/v2/123/contacts', FakeResponse.new(201, json_response(resource)))
+      stub_request(:post, 'https://moneybird.com/api/v2/123/contacts')
+        .to_return(status: 201, body: fixture_response(:contact))
     end
 
     it "creates a contact" do
       contact = service.create({company_name: 'ACME', firstname: 'Foo', lastname: 'Bar'})
 
-      contact.id.must_equal hash_response(resource)['id']
+      contact.id.must_equal hash_response(:contact)['id']
     end
   end
 
   describe "#update" do
-    let(:id) { hash_response(resource)['id']}
+    let(:id) { hash_response(:contact)['id'] }
 
     before do
-      client.http.register_request(:PATCH, "/api/v2/123/contacts/#{id}", FakeResponse.new(201, json_response(resource)))
+      stub_request(:patch, "https://moneybird.com/api/v2/123/contacts/#{id}")
+        .to_return(status: 201, body: fixture_response(:contact))
     end
 
     it "updates a contact" do
@@ -58,18 +59,20 @@ describe Moneybird::Service::Contact do
     let(:attributes) { {id: id, company_name: 'ACME', firstname: 'Foo', lastname: 'Bar'} }
 
     it "creates when not persisted" do
-      client.http.register_request(:POST, '/api/v2/123/contacts', FakeResponse.new(201, json_response(resource)))
+      stub_request(:post, "https://moneybird.com/api/v2/123/contacts")
+        .to_return(status: 201, body: fixture_response(:contact))
       attributes.delete(:id)
 
       resource = service.build(attributes)
-      service.save(resource).must_equal true
+      service.save(resource).must_equal resource
     end
 
     it "updates when persisted" do
-      client.http.register_request(:PATCH, "/api/v2/123/contacts/#{id}", FakeResponse.new(200, json_response(resource)))
+      stub_request(:patch, "https://moneybird.com/api/v2/123/contacts/#{id}")
+        .to_return(status: 200, body: fixture_response(:contact))
 
       resource = service.build(attributes)
-      service.save(resource).must_equal true
+      service.save(resource).must_equal resource
     end
   end
 
@@ -78,7 +81,8 @@ describe Moneybird::Service::Contact do
     let(:attributes) { {id: id, company_name: 'ACME', firstname: 'Foo', lastname: 'Bar'} }
 
     it "creates when not persisted" do
-      client.http.register_request(:DELETE, '/api/v2/123/contacts/1', FakeResponse.new(204, json_response(resource)))
+      stub_request(:delete, "https://moneybird.com/api/v2/123/contacts/#{id}")
+        .to_return(status: 204, body: '')
 
       resource = service.build(attributes)
       service.delete(resource).must_equal true
@@ -86,38 +90,44 @@ describe Moneybird::Service::Contact do
   end
 
   describe "#find" do
-    let(:id) { hash_response(resource)['id']}
+    let(:id) { hash_response(:contact)['id']}
 
     it "finds an existing record" do
-      client.http.register_request(:GET, "/api/v2/123/contacts/#{id}", FakeResponse.new(200, json_response(resource)))
+      stub_request(:get, "https://moneybird.com/api/v2/123/contacts/#{id}")
+        .to_return(status: 200, body: fixture_response(:contact))
 
       resource = service.find(id)
       resource.id.must_equal id
     end
 
     it "returns nil if record does not exist" do
-      client.http.register_request(:GET, "/api/v2/123/contacts/#{id}", FakeResponse.new(404, json_response(:error)))
+      stub_request(:get, "https://moneybird.com/api/v2/123/contacts/#{id}")
+        .to_return(status: 404, body: fixture_response(:error))
 
-      resource = service.find(id)
-      resource.must_be_nil
+      assert_raises Moneybird::HttpError::NotFound do
+        service.find(id)
+      end
     end
   end
 
   describe "#find_by_customer_id" do
-    let(:customer_id) { hash_response(resource)['customer_id']}
+    let(:customer_id) { hash_response(:contact)['customer_id']}
 
     it "creates when not persisted" do
-      client.http.register_request(:GET, "/api/v2/123/contacts/customer_id/#{customer_id}", FakeResponse.new(200, json_response(resource)))
+      stub_request(:get, "https://moneybird.com/api/v2/123/contacts/customer_id/#{customer_id}")
+        .to_return(status: 200, body: fixture_response(:contact))
 
       resource = service.find_by_customer_id(customer_id)
       resource.customer_id.must_equal customer_id
     end
 
     it "returns nil if record does not exist" do
-      client.http.register_request(:GET, "/api/v2/123/contacts/customer_id/#{customer_id}", FakeResponse.new(404, json_response(:error)))
+      stub_request(:get, "https://moneybird.com/api/v2/123/contacts/customer_id/#{customer_id}")
+        .to_return(status: 404, body: fixture_response(:error))
 
-      resource = service.find_by_customer_id(customer_id)
-      resource.must_be_nil
+      assert_raises Moneybird::HttpError::NotFound do
+        service.find_by_customer_id(customer_id)
+      end
     end
   end
 end

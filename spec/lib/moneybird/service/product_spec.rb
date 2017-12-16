@@ -1,13 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::Product do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::Product.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/products', FakeResponse.new(200, json_response(:products)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/products')
+        .to_return(status: 200, body: fixture_response(:products))
     end
 
     it "returns list of products" do

@@ -1,13 +1,13 @@
 require "spec_helper"
 
 describe Moneybird::Service::Estimate do
-  let(:client) { faked_client }
-
+  let(:client) { Moneybird::Client.new('bearer token') }
   let(:service) { Moneybird::Service::Estimate.new(client, '123') }
 
   describe "#all" do
     before do
-      client.http.register_request(:GET, '/api/v2/123/estimates', FakeResponse.new(200, json_response(:estimates)))
+      stub_request(:get, 'https://moneybird.com/api/v2/123/estimates')
+        .to_return(status: 200, body: fixture_response(:estimates))
     end
 
     it "returns list of estimates" do

@@ -1,6 +1,8 @@
+require 'faraday_middleware'
+
 module Moneybird
   class Client
-    attr_reader :bearer_token, :_last_response
+    attr_reader :bearer_token
     attr_accessor :errors
     attr_writer :http, :faraday_adapter
 
@@ -9,7 +11,7 @@ module Moneybird
     end
 
     def base_url
-      "https://moneybird.com/api/#{version}/"
+      "https://moneybird.com/"
     end
 
     def version
@@ -21,50 +23,53 @@ module Moneybird
     end
 
     def http
-      @http ||= begin
-        uri = uri_for_path(base_url)
-        http = Faraday.new(:url => uri) do |faraday|
-          faraday.request  :url_encoded
-          faraday.adapter  faraday_adapter
-        end
-        http
+      @http ||= Faraday.new(url: base_url) do |faraday|
+        faraday.headers = faraday_headers
+        faraday.request :url_encoded
+        faraday.response :json
+        faraday.use Moneybird::Middleware::ErrorHandling
+        faraday.use Moneybird::Middleware::Pagination
+        # faraday.response :logger do |logger|
+        #   logger.filter(/(Bearer)\s(\S+)/, '\1[REMOVED]')
+        # end
+        faraday.adapter faraday_adapter
       end
     end
 
-    def headers
+    %i[get patch post delete].each do |call|
+      define_method call do |path, options = {}|
+        http.public_send(call, "/api/#{version}/#{path}", options).body
+      end
+    end
+
+    def get_all_pages(path, options = {})
+      get_each_page(path, options).inject([]) do |array, objects|
+        array += objects
+      end
+    end
+
+    def get_each_page(path, options = {})
+      return enum_for(:get_each_page, path, options) unless block_given?
+      path = "/api/#{version}/#{path}"
+      while path
+        response = http.get(path, options)
+        yield response.body
+        path = (response[:pagination_links].next if response[:pagination_links])
+      end
+    end
+
+    def administrations
+      Moneybird::Service::Administration.new(self).all
+    end
+
+    private
+
+    def faraday_headers
       {
         'Accept' => 'application/json',
         'Content-Type' => 'application/json',
         'Authorization' => "Bearer #{bearer_token}"
       }
-    end
-
-    def uri_for_path(path)
-      URI.parse(File.join(base_url, path))
-    end
-
-    def get(path, headers={})
-      uri = uri_for_path(path)
-      @_last_response = http.get(uri.request_uri, nil, self.headers.merge(headers))
-    end
-
-    def patch(path, body=nil, headers={})
-      uri = uri_for_path(path)
-      @_last_response = http.patch(uri.request_uri, body, self.headers.merge(headers))
-    end
-
-    def post(path, body=nil, headers={})
-      uri = uri_for_path(path)
-      @_last_response = http.post(uri.request_uri, body, self.headers.merge(headers))
-    end
-
-    def delete(path, headers={})
-      uri = uri_for_path(path)
-      @_last_response = http.delete(uri.request_uri, nil, self.headers.merge(headers))
-    end
-
-    def administrations
-      Moneybird::Service::Administration.new(self).all
     end
   end
 end
